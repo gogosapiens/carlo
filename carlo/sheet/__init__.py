@@ -13,9 +13,9 @@ class Sheet:
 				self.set_item_value(item, value, key=key)
 		return item
 
-	def create_sheet(sheet_name, folder_id="", users=project.keys["google_drive_users"]):
+	def create_sheet(sheet_name, folder_id="", users=project.keys()["google_drive_users"]):
 		# Replace the placeholders with your values
-		credentials_file = project.keys["google_credentials_path"]
+		credentials_file = project.keys()["google_credentials_path"]
 
 		# Authenticate with Google Drive API using service account credentials
 		credentials = service_account.Credentials.from_service_account_file(credentials_file, scopes=['https://www.googleapis.com/auth/drive'])
@@ -56,7 +56,7 @@ class Sheet:
 
 
 	def command_center(page="dashboard"):
-		return Sheet(project.keys["command_center_sheet_id"], page=page)
+		return Sheet(project.keys()["command_center_sheet_id"], page=page)
 
 	def __init__(self, sheet_id, page=""):
 		self.sheet_id = sheet_id
@@ -73,7 +73,7 @@ class Sheet:
 
 	def get_spreadsheets():
 		scopes = ['https://www.googleapis.com/auth/spreadsheets']
-		creds = service_account.Credentials.from_service_account_file(project.keys["google_credentials_path"], scopes=scopes)
+		creds = service_account.Credentials.from_service_account_file(project.keys()["google_credentials_path"], scopes=scopes)
 		service = build('sheets', 'v4', credentials=creds)
 		return service.spreadsheets()
 

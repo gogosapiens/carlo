@@ -1,6 +1,6 @@
 import json
 
-def get_meta():
+def meta():
     try:
         with open("project/meta.json", "r") as f:
             meta = json.load(f)
@@ -8,22 +8,20 @@ def get_meta():
         meta = {}
     return meta
 
-def get_user_input():
+def user_input():
     with open("project/user-input.json", "r") as f:
         user_input = json.load(f)
     return user_input
 
-def get_keys():
+def keys():
     with open("keys/keys.json", "r") as f:
         keys = json.load(f)
     return keys
 
-user_input = get_user_input()
-keys = get_keys()
-meta = get_meta()
 
 def set_meta_value(value, key=""):
-    self.meta[key] = value
+    meta = meta()
+    meta[key] = value
     with open("project/meta.json", "w") as f:
         json.dump(self.meta, f)
 
