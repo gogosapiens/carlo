@@ -78,7 +78,7 @@ class Sheet:
 		return service.spreadsheets()
 
 	def get_items(self):
-		result = self.spreadsheets.values().get(spreadsheetId=self.sheet_id, range=f'{self.sheet_page}!A1:CZ1000').execute()
+		result = self.spreadsheets.values().get(spreadsheetId=self.sheet_id, range=f'{self.sheet_page}!A1:CZ100000').execute()
 		values = result.get('values', [])
 		items = []
 		fields = list(filter(lambda f: len(f) > 0, values[0]))
