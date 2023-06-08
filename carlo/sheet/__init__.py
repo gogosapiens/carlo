@@ -13,7 +13,7 @@ class Sheet:
 				self.set_item_value(item, value, key=key)
 		return item
 
-	def create_sheet(sheet_name, folder_id="", users=project.keys()["google_drive_users"]):
+	def create_sheet(sheet_name, folder_id="", users=[]):
 		# Replace the placeholders with your values
 		credentials_file = project.keys()["google_credentials_path"]
 
