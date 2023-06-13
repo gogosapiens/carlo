@@ -1,0 +1,4 @@
+google-auth
+google-api-python-client
+openai
+google-cloud-storage

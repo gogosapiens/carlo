@@ -4,14 +4,24 @@ from googleapiclient.discovery import build
 
 class Sheet:
 
-	def insert_item(self, item, row=None):
+	def insert_item(self, new_item, row=None):
 		if row == None:
 			row = 2 if len(self.items) == 0 else self.items[-1]["_row"] + 1
-		item["_row"] = row
-		for key, value in item.items():
-			if key != "_row":
-				self.set_item_value(item, value, key=key)
-		return item
+		keyValues = new_item.copy()
+		new_item["_row"] = row
+		self.set_item_values(new_item, keyValues)
+		return new_item
+
+
+	def insert_items(self, new_items, row=None):
+		if row == None:
+			row = 2 if len(self.items) == 0 else self.items[-1]["_row"] + 1
+		for index, new_item in enumerate(new_items):
+			keyValues = new_item.copy()
+			new_item["_row"] = row + index
+			self.set_item_values(new_item, keyValues)
+		return new_items
+
 
 	def create_sheet(sheet_name, folder_id="", users=[]):
 		# Replace the placeholders with your values
@@ -58,10 +68,12 @@ class Sheet:
 	def command_center(page="dashboard"):
 		return Sheet(project.keys()["command_center_sheet_id"], page=page)
 
+
 	def __init__(self, sheet_id, page=""):
 		self.sheet_id = sheet_id
 		self.sheet_page = page
 		self.refresh()
+
 
 	def number_to_letter(self, num):
 		letters = ''
@@ -71,11 +83,13 @@ class Sheet:
 			num //= 26
 		return letters
 
+
 	def get_spreadsheets():
 		scopes = ['https://www.googleapis.com/auth/spreadsheets']
 		creds = service_account.Credentials.from_service_account_file(project.keys()["google_credentials_path"], scopes=scopes)
 		service = build('sheets', 'v4', credentials=creds)
 		return service.spreadsheets()
+
 
 	def get_items(self):
 		result = self.spreadsheets.values().get(spreadsheetId=self.sheet_id, range=f'{self.sheet_page}!A1:CZ100000').execute()
@@ -90,8 +104,10 @@ class Sheet:
 			items.append(item)
 		return items, fields
 
+
 	def set_fields(self, fields):
 		self.set_values(fields, row=1)		
+
 
 	def set_values(self, values, row=1):
 		column = self.number_to_letter(len(values))
@@ -107,6 +123,43 @@ class Sheet:
 			valueInputOption='USER_ENTERED', 
 			body=body
 		).execute()
+
+
+	def divide_list(self, numbers):
+	    result = []
+	    sublist = []
+	    for i in range(len(numbers)):
+	        sublist.append(numbers[i])
+	        if i + 1 < len(numbers) and numbers[i + 1] != numbers[i] + 1:
+	            result.append(sublist)
+	            sublist = []
+	    if sublist:
+	        result.append(sublist)
+	    return result
+
+
+	def set_item_values(self, task, keyValues):
+		key_indexes = sorted(list(map(lambda key: self.fields.index(key) + 1, keyValues.keys())))
+		groups = self.divide_list(key_indexes)
+		for group in groups:
+			column1 = self.number_to_letter(group[0])
+			column2 = self.number_to_letter(group[-1])
+			sheet_range = f'{self.sheet_page}!{column1}{task["_row"]}:{column2}{task["_row"]}'
+			values = list(map(lambda index: keyValues[self.fields[index - 1]], group))
+			body = {
+				'range': sheet_range,
+				'values': [values],
+				'majorDimension': 'ROWS'
+			}
+			result = self.spreadsheets.values().update(
+				spreadsheetId=self.sheet_id, 
+				range=sheet_range,
+				valueInputOption='USER_ENTERED', 
+				body=body
+			).execute()
+		for key in keyValues.keys():
+			task[key] = keyValues[key]
+
 
 	def set_item_value(self, item, value, key=None):
 		item[key] = value
@@ -124,8 +177,10 @@ class Sheet:
 			body=body
 		).execute()
 
+
 	def refresh(self):
 		self.items, self.fields = self.get_items()
+
 
 	sheet_id = ""
 	sheet_page = ""
