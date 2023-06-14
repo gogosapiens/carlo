@@ -1,7 +1,7 @@
 import json
 import sys
 import subprocess
-import os
+import inspect
 
 def input_json():
     with open(f'{sys.argv[0]}-input.json', 'r') as f:
@@ -35,9 +35,9 @@ def call(script_path, input_json):
     return output_json(script_path)
 
 def printc(text, phase=None):
-    file_path = os.path.abspath(__file__)
-    file_name = os.path.basename(file_path)
+    frame_info = inspect.stack()[1]
+    file_name = frame_info.filename.split('/')[-1]
     if phase is None:
-        print(f"[{file_name}] {text}")
+        print(f"[{file_name}]: {text}")
     else:
-        print(f"[{file_name}] <{phase.upper()}> {text}")
+        print(f"[{file_name}]: [{phase.upper()}] {text}")
