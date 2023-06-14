@@ -34,6 +34,9 @@ def call(script_path, input_json):
         assert True
     return output_json(script_path)
 
+def printme(text):
+    print(text)
+
 def printc(text, phase=None, data=None):
     frame_info = inspect.stack()[1]
     file_name = frame_info.filename.split('/')[-1]
