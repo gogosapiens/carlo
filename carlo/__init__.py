@@ -34,10 +34,20 @@ def call(script_path, input_json):
         assert True
     return output_json(script_path)
 
-def printc(text, phase=None):
+def printc(text, phase=None, args=None):
     frame_info = inspect.stack()[1]
     file_name = frame_info.filename.split('/')[-1]
-    if phase is None:
-        print(f"[{file_name}]: {text}")
-    else:
-        print(f"[{file_name}]: [{phase.upper()}] {text}")
+    string = f"[{file_name}]: "
+    if phase != None:
+        string += f"[{phase.upper()}] "
+
+    if isinstance(args, dict):
+        for key, value in args.items():
+            string += f"[{key}: {value}] "
+    elif isinstance(args, list):
+        for arg in args:
+            string += f"[{arg}] "
+
+    string += text
+    print(string)
+    
