@@ -28,7 +28,7 @@ def get_json(prompt, repeat_count=3, model="gpt-3.5-turbo", temperature=1):
 		json_data = json.loads(json_str)
 		return json_data
 	except json.JSONDecodeError as e:
-		printc("Error decoding GPT JSON:", e)
+		printc(f"Error decoding GPT JSON: {e}")
 		if repeat_count > 0:
 			printc("Repeating GPT request...")
 			return get_json(prompt, repeat_count=repeat_count-1, model=model, temperature=temperature)
