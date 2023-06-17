@@ -1,6 +1,5 @@
 import json
 import openai
-import project
 from carlo import project
 from carlo import printc
 import time
