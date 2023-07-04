@@ -3,7 +3,7 @@ from googleapiclient.discovery import build
 import json
 from carlo import project
 
-credentials_file = project.keys["google_credentials_path"]
+credentials_file = project.keys()["google_credentials_path"]
 credentials = service_account.Credentials.from_service_account_file(credentials_file, scopes=["https://www.googleapis.com/auth/drive"])
 drive_service = build("drive", "v3", credentials=credentials)
 
@@ -16,7 +16,7 @@ def get_folder_name(folder_id):
 		print(f"An error occurred: {error}")
 	return folder['name']
 
-def create_folder(folder_name, parent_folder_id=None, users=project.keys["google_drive_users"]):
+def create_folder(folder_name, parent_folder_id=None, users=project.keys()["google_drive_users"]):
 	# Create the folder
 	folder_metadata = {
 		'name': folder_name,

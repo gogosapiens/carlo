@@ -20,7 +20,7 @@ def create_github_repos(cc_sheet, cc_item):
 
 
 def create_drive_infrustructure():
-    base_folder_id = project.keys["google_drive_root_folder_id"]
+    base_folder_id = project.keys()["google_drive_root_folder_id"]
     project_id_prefix = project.user_input["project_id_prefix"]
 
     #Creating google drive 'projects' folder
