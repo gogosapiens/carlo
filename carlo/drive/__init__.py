@@ -1,9 +1,10 @@
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 import json
-from carlo import project
+from carlo.keys import keys
 
-credentials_file = project.keys()["google_credentials_path"]
+credentials_file = keys()["google_credentials_path"]
 credentials = service_account.Credentials.from_service_account_file(credentials_file, scopes=["https://www.googleapis.com/auth/drive"])
 drive_service = build("drive", "v3", credentials=credentials)
 
@@ -12,11 +13,11 @@ def get_folder_name(folder_id):
 		# Call the Drive API
 		folder = drive_service.files().get(fileId=folder_id, fields='name').execute()
 		print(f"The name of the folder is: {folder['name']}")
-	except HttpError as error:
+	except TypeError as error:
 		print(f"An error occurred: {error}")
 	return folder['name']
 
-def create_folder(folder_name, parent_folder_id=None, users=project.keys()["google_drive_users"]):
+def create_folder(folder_name, parent_folder_id=None, users=keys()["google_drive_users"]):
 	# Create the folder
 	folder_metadata = {
 		'name': folder_name,
@@ -27,7 +28,7 @@ def create_folder(folder_name, parent_folder_id=None, users=project.keys()["goog
 		folder = drive_service.files().create(body=folder_metadata, fields='id').execute()
 		folder_id = folder.get('id')
 		print(f"Folder '{folder_name}' created with ID: {folder_id}")
-	except HttpError as error:
+	except TypeError as error:
 		print(f"An error occurred: {error}")
 		exit()
 
@@ -42,9 +43,9 @@ def create_folder(folder_name, parent_folder_id=None, users=project.keys()["goog
 			permission = drive_service.permissions().create(
 				fileId=folder_id,
 				body=permission_metadata,
-				sendNotificationEmail=True).execute()
+				sendNotificationEmail=False).execute()
 			print(f"Folder '{folder_name}' shared with user {user_email}")
-		except HttpError as error:
+		except TypeError as error:
 			print(f"An error occurred: {error}")
 
 	return folder_id
@@ -70,11 +71,39 @@ def get_folder_id(relative_path, parent_folder_id=""):
 
     return folder_id
 
+def upload_file(file_path, folder_id, mimetype='image/png'):
+	# Upload the image to the specified folder
+	file_metadata = {'name': file_path.split("/")[-1], 'parents': [folder_id]}
+	media = MediaFileUpload(file_path, mimetype=mimetype)
+	file = drive_service.files().create(body=file_metadata, media_body=media, fields='id,webViewLink').execute()
+
+	# Get the ID and public link of the uploaded file
+	file_id = file.get('id')
+	public_link = file.get('webViewLink')
+
+	return file_id, public_link
+
+def folder_contents(folder_id):
+	# Get the contents of the folder
+	query = f"'{folder_id}' in parents"
+	response = drive_service.files().list(q=query).execute()
+	return response.get('files', [])
+
+def folder_contains_file(folder_id, file_name):
+	# Search for the file in the folder
+	query = f"'{folder_id}' in parents and name = '{file_name}'"
+	response = drive_service.files().list(q=query).execute()
+	files = response.get('files', [])
+	if files:
+		return True
+	else:
+		return False
 
 def delete_folder(folder_id):
 	try:
 		drive_service.files().delete(fileId=folder_id).execute()
 		print(f"Folder with ID '{folder_id}' deleted successfully.")
-	except HttpError as error:
+	except TypeError as error:
 		print(f"An error occurred: {error}")
+
 

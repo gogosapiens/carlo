@@ -1,15 +1,15 @@
 import requests
 import json
-from carlo import project
+from carlo.keys import keys
 
 def create_repo(repo_name, collaborators):
     # Replace <username> with your GitHub username
-    username = project.keys()["github_username"]
+    username = keys()["github_username"]
     # Replace <access_token> with your GitHub personal access token
-    access_token = project.keys()["github_access_token"]
+    access_token = keys()["github_access_token"]
 
     # Set the API endpoint
-    org_name = project.keys()["github_organization"]
+    org_name = keys()["github_organization"]
     url = f'https://api.github.com/orgs/{org_name}/repos'
 
     # Set the request headers and payload

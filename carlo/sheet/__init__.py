@@ -1,4 +1,4 @@
-from carlo import project
+from carlo.keys import keys
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
@@ -24,7 +24,7 @@ class Sheet:
 
 	@classmethod
 	def duplicate_sheet(new_sheet_name, template_sheet_id="", folder_id="", users=[]):
-		credentials_file = project.keys()["google_credentials_path"]
+		credentials_file = keys()["google_credentials_path"]
 		credentials = service_account.Credentials.from_service_account_file(credentials_file, scopes=['https://www.googleapis.com/auth/drive'])
 
 		sheets_service = build('sheets', 'v4', credentials=credentials)
@@ -78,7 +78,7 @@ class Sheet:
 	@classmethod
 	def create_sheet(sheet_name, folder_id="", users=[]):
 		# Replace the placeholders with your values
-		credentials_file = project.keys()["google_credentials_path"]
+		credentials_file = keys()["google_credentials_path"]
 
 		# Authenticate with Google Drive API using service account credentials
 		credentials = service_account.Credentials.from_service_account_file(credentials_file, scopes=['https://www.googleapis.com/auth/drive'])
@@ -95,7 +95,7 @@ class Sheet:
 			sheet_id = sheet.get('id')
 			sheet_link = sheet.get('webViewLink')
 			print(f"Sheet '{sheet_name}' created with ID: {sheet_id}")
-		except HttpError as error:
+		except TypeError as error:
 			print(f"An error occurred: {error}")
 			exit()
 
@@ -112,14 +112,14 @@ class Sheet:
 					body=permission_metadata,
 					sendNotificationEmail=True).execute()
 				print(f"Sheet '{sheet_name}' shared with user {user_email}")
-			except HttpError as error:
+			except TypeError as error:
 				print(f"An error occurred: {error}")
 
 		return sheet_id, sheet_link
 
 
 	def projects_sheet(page="projects"):
-		return Sheet(project.keys()["projects_sheet_id"], page=page)
+		return Sheet(keys()["projects_sheet_id"], page=page)
 	
 	def get_item(self, condition):
 		items = list(filter(condition, self.items))
@@ -150,7 +150,7 @@ class Sheet:
 
 	def get_spreadsheets():
 		scopes = ['https://www.googleapis.com/auth/spreadsheets']
-		creds = service_account.Credentials.from_service_account_file(project.keys()["google_credentials_path"], scopes=scopes)
+		creds = service_account.Credentials.from_service_account_file(keys()["google_credentials_path"], scopes=scopes)
 		service = build('sheets', 'v4', credentials=creds)
 		return service.spreadsheets()
 
@@ -190,16 +190,16 @@ class Sheet:
 
 
 	def divide_list(self, numbers):
-	    result = []
-	    sublist = []
-	    for i in range(len(numbers)):
-	        sublist.append(numbers[i])
-	        if i + 1 < len(numbers) and numbers[i + 1] != numbers[i] + 1:
-	            result.append(sublist)
-	            sublist = []
-	    if sublist:
-	        result.append(sublist)
-	    return result
+		result = []
+		sublist = []
+		for i in range(len(numbers)):
+			sublist.append(numbers[i])
+			if i + 1 < len(numbers) and numbers[i + 1] != numbers[i] + 1:
+				result.append(sublist)
+				sublist = []
+		if sublist:
+			result.append(sublist)
+		return result
 
 
 	def set_item_values(self, task, keyValues):

@@ -1,5 +1,5 @@
 import requests
-from carlo import project
+from carlo.keys import keys
 
 class Figma:
     file_key = ""
@@ -11,7 +11,7 @@ class Figma:
         # Set the Figma API endpoint and access token
         api_url = 'https://api.figma.com/v1'
 
-        access_token = project.keys()["figma_access_token"]
+        access_token = keys()["figma_access_token"]
 
         # Construct the Figma API URL for the text layer
         url = f'{api_url}/images/{self.file_key}?ids={node_id}&format=png&scale={scale}'

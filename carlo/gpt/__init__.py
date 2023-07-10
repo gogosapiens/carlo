@@ -1,10 +1,10 @@
 import json
 import openai
-from carlo import project
+from carlo.keys import keys
 from carlo import printc
 import time
 
-openai.api_key = project.keys()["openai_key"]
+openai.api_key = keys()["openai_key"]
 
 def get_answer(prompt, model="gpt-3.5-turbo", temperature=1):
 	messages = [{"role": "user", "content": prompt}]
