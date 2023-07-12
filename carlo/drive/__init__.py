@@ -2,9 +2,9 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import json
-from carlo.keys import keys
+from carlo import keychain
 
-credentials_file = keys()["google_credentials_path"]
+credentials_file = keychain.keys()["google_credentials_path"]
 credentials = service_account.Credentials.from_service_account_file(credentials_file, scopes=["https://www.googleapis.com/auth/drive"])
 drive_service = build("drive", "v3", credentials=credentials)
 
@@ -17,7 +17,7 @@ def get_folder_name(folder_id):
 		print(f"An error occurred: {error}")
 	return folder['name']
 
-def create_folder(folder_name, parent_folder_id=None, users=keys()["google_drive_users"]):
+def create_folder(folder_name, parent_folder_id=None, users=keychain.keys()["google_drive_users"]):
 	# Create the folder
 	folder_metadata = {
 		'name': folder_name,

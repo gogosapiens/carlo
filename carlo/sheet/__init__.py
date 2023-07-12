@@ -1,4 +1,4 @@
-from carlo.keys import keys
+from carlo import keychain
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
@@ -12,19 +12,22 @@ class Sheet:
 		self.set_item_values(new_item, keyValues)
 		return new_item
 
-
 	def insert_items(self, new_items, row=None):
 		if row == None:
 			row = 2 if len(self.items) == 0 else self.items[-1]["_row"] + 1
+		keyValuesList = []
 		for index, new_item in enumerate(new_items):
 			keyValues = new_item.copy()
 			new_item["_row"] = row + index
-			self.set_item_values(new_item, keyValues)
+			keyValuesList.append(keyValues)
+		self.set_items_values(new_items, keyValuesList)
 		return new_items
 
-	@classmethod
 	def duplicate_sheet(new_sheet_name, template_sheet_id="", folder_id="", users=[]):
-		credentials_file = keys()["google_credentials_path"]
+		print("new_sheet_name", new_sheet_name)
+		print("template_sheet_id", template_sheet_id)
+		print("folder_id", folder_id)
+		credentials_file = keychain.keys()["google_credentials_path"]
 		credentials = service_account.Credentials.from_service_account_file(credentials_file, scopes=['https://www.googleapis.com/auth/drive'])
 
 		sheets_service = build('sheets', 'v4', credentials=credentials)
@@ -75,10 +78,9 @@ class Sheet:
 		return duplicated_sheet_id, web_link
 		
 
-	@classmethod
 	def create_sheet(sheet_name, folder_id="", users=[]):
 		# Replace the placeholders with your values
-		credentials_file = keys()["google_credentials_path"]
+		credentials_file = keychain.keys()["google_credentials_path"]
 
 		# Authenticate with Google Drive API using service account credentials
 		credentials = service_account.Credentials.from_service_account_file(credentials_file, scopes=['https://www.googleapis.com/auth/drive'])
@@ -117,21 +119,10 @@ class Sheet:
 
 		return sheet_id, sheet_link
 
-
-	def projects_sheet(page="projects"):
-		return Sheet(keys()["projects_sheet_id"], page=page)
 	
 	def get_item(self, condition):
 		items = list(filter(condition, self.items))
 		return items[0] if len(items) > 0 else None
-
-	def app_sheet(app_id, page="texts"):
-		projects_sheet = Sheet.projects_sheet()
-		project_app_items = list(filter(lambda item: item["app_id"] == app_id, projects_sheet.items))
-		project_app_item = project_app_items[0] if len(project_app_items) > 0 else None
-		app_sheet_id = project_app_item["app_sheet_url"].split("/")[-1]
-		return Sheet(app_sheet_id, page=page)
-
 
 	def __init__(self, sheet_id, page=""):
 		self.sheet_id = sheet_id
@@ -147,10 +138,9 @@ class Sheet:
 			num //= 26
 		return letters
 
-
 	def get_spreadsheets():
 		scopes = ['https://www.googleapis.com/auth/spreadsheets']
-		creds = service_account.Credentials.from_service_account_file(keys()["google_credentials_path"], scopes=scopes)
+		creds = service_account.Credentials.from_service_account_file(keychain.keys()["google_credentials_path"], scopes=scopes)
 		service = build('sheets', 'v4', credentials=creds)
 		return service.spreadsheets()
 
@@ -202,13 +192,13 @@ class Sheet:
 		return result
 
 
-	def set_item_values(self, task, keyValues):
+	def set_item_values(self, item, keyValues):
 		key_indexes = sorted(list(map(lambda key: self.fields.index(key) + 1, keyValues.keys())))
 		groups = self.divide_list(key_indexes)
 		for group in groups:
 			column1 = self.number_to_letter(group[0])
 			column2 = self.number_to_letter(group[-1])
-			sheet_range = f'{self.sheet_page}!{column1}{task["_row"]}:{column2}{task["_row"]}'
+			sheet_range = f'{self.sheet_page}!{column1}{item["_row"]}:{column2}{item["_row"]}'
 			values = list(map(lambda index: keyValues[self.fields[index - 1]], group))
 			body = {
 				'range': sheet_range,
@@ -222,7 +212,34 @@ class Sheet:
 				body=body
 			).execute()
 		for key in keyValues.keys():
-			task[key] = keyValues[key]
+			item[key] = keyValues[key]
+
+	def set_items_values(self, items, keyValuesList):
+		key_indexes = sorted(list(map(lambda key: self.fields.index(key) + 1, keyValuesList[0].keys())))
+		groups = self.divide_list(key_indexes)
+		for group in groups:
+			column1 = self.number_to_letter(group[0])
+			column2 = self.number_to_letter(group[-1])
+			sheet_range = f'{self.sheet_page}!{column1}{items[0]["_row"]}:{column2}{items[-1]["_row"]}'
+
+			valuesList = []
+			for keyValues in keyValuesList:
+				values = list(map(lambda index: keyValues[self.fields[index - 1]], group))
+				valuesList.append(values)
+			body = {
+				'range': sheet_range,
+				'values': valuesList,
+				'majorDimension': 'ROWS'
+			}
+			result = self.spreadsheets.values().update(
+				spreadsheetId=self.sheet_id, 
+				range=sheet_range,
+				valueInputOption='USER_ENTERED', 
+				body=body
+			).execute()
+		for i, keyValues in enumerate(keyValuesList):
+			for key in keyValues.keys():
+				items[i][key] = keyValues[key]
 
 
 	def set_item_value(self, item, value, key=None):
