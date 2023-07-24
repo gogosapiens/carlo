@@ -1,81 +1,70 @@
 from carlo import keychain
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+import time
 
 class Sheet:
 
 	def insert_item(self, new_item, row=None):
 		if row == None:
 			row = 2 if len(self.items) == 0 else self.items[-1]["_row"] + 1
-		keyValues = new_item.copy()
+		key_values = new_item.copy()
 		new_item["_row"] = row
-		self.set_item_values(new_item, keyValues)
+		self.set_item_values(new_item, key_values)
 		return new_item
 
 	def insert_items(self, new_items, row=None):
 		if row == None:
 			row = 2 if len(self.items) == 0 else self.items[-1]["_row"] + 1
-		keyValuesList = []
+		item_values_tuples = []
 		for index, new_item in enumerate(new_items):
-			keyValues = new_item.copy()
+			key_values = new_item.copy()
 			new_item["_row"] = row + index
-			keyValuesList.append(keyValues)
-		self.set_items_values(new_items, keyValuesList)
+			item_values_tuples.append((new_item, key_values))
+		self.set_items_values(item_values_tuples)
 		return new_items
 
 	def duplicate_sheet(new_sheet_name, template_sheet_id="", folder_id="", users=[]):
-		print("new_sheet_name", new_sheet_name)
-		print("template_sheet_id", template_sheet_id)
-		print("folder_id", folder_id)
 		credentials_file = keychain.keys()["google_credentials_path"]
 		credentials = service_account.Credentials.from_service_account_file(credentials_file, scopes=['https://www.googleapis.com/auth/drive'])
 
-		sheets_service = build('sheets', 'v4', credentials=credentials)
 		drive_service = build('drive', 'v3', credentials=credentials)
 
-		# ID of the source sheet to be duplicated
-		source_sheet_id = template_sheet_id
+		# Make a copy of the original spreadsheet
+		copied_file = {'name': new_sheet_name}
+		request = drive_service.files().copy(fileId=template_sheet_id, body=copied_file, fields='id, parents')
+		file = request.execute()
+		# Move the copied spreadsheet to the desired folder
+		file_id = file['id']
+		request = drive_service.files().update(
+			fileId=file_id,
+			addParents=folder_id,
+			removeParents=file['parents'][0],
+			fields='id, parents'
+		)
+		file = request.execute()
 
-		# Folder ID where the duplicated sheet will be placed
-		destination_folder_id = folder_id
+		# Share the copied spreadsheet with desired users
+		batch = drive_service.new_batch_http_request()
+		user_permission = {
+			'type': 'user',
+			'role': 'writer'
+		}
+		for email in users:
+			user_permission['emailAddress'] = email
+			batch.add(drive_service.permissions().create(
+				fileId=file_id,
+				body=user_permission,
+				fields='id',
+			))
+		batch.execute()
 
-		duplicated_sheet_name = new_sheet_name
+		# Get the spreadsheet ID and URL
+		spreadsheet_id = file['id']
+		spreadsheet_url = 'https://docs.google.com/spreadsheets/d/' + spreadsheet_id
 
-		# Email addresses of users to provide edit permissions
-		user_emails = users
-
-		# Duplicate the sheet
-		duplicate_request = sheets_service.spreadsheets().sheets().copyTo(spreadsheetId=source_sheet_id,
-																		sheetId=0)
-		duplicate_response = duplicate_request.execute()
-		duplicated_sheet_id = duplicate_response['sheetId']
-
-		# Rename the duplicated sheet
-		request = sheets_service.spreadsheets().batchUpdate(spreadsheetId=duplicated_sheet_id, body={
-			'requests': [{'updateSheetProperties': {'properties': {'sheetId': 0, 'title': duplicated_sheet_name}, 'fields': 'title'}}]
-		})
-		request.execute()
-
-		# Move the duplicated sheet to the specified folder
-		drive_service.files().update(fileId=duplicated_sheet_id,
-									addParents=destination_folder_id,
-									removeParents='root').execute()
-
-		# Share the duplicated sheet with users for edit access
-		for email in user_emails:
-			permission = {
-				'type': 'user',
-				'role': 'writer',
-				'emailAddress': email
-			}
-			drive_service.permissions().create(fileId=duplicated_sheet_id, body=permission).execute()
-
-		# Get the web link and new sheet ID
-		response = drive_service.files().get(fileId=duplicated_sheet_id,
-											fields='webViewLink').execute()
-		web_link = response['webViewLink']
-		
-		return duplicated_sheet_id, web_link
+		return spreadsheet_id, spreadsheet_url
 		
 
 	def create_sheet(sheet_name, folder_id="", users=[]):
@@ -117,7 +106,7 @@ class Sheet:
 			except TypeError as error:
 				print(f"An error occurred: {error}")
 
-		return sheet_id, sheet_link
+		return sheet_id, 'https://docs.google.com/spreadsheets/d/' + sheet_id
 
 	
 	def get_item(self, condition):
@@ -146,7 +135,7 @@ class Sheet:
 
 
 	def get_items(self):
-		result = self.spreadsheets.values().get(spreadsheetId=self.sheet_id, range=f'{self.sheet_page}!A1:CZ100000').execute()
+		result = self.perform_get_sheet_action(f'{self.sheet_page}!A1:CZ100000')
 		values = result.get('values', [])
 		items = []
 		fields = list(filter(lambda f: len(f) > 0, values[0]))
@@ -171,12 +160,7 @@ class Sheet:
 			'values': [values],
 			'majorDimension': 'ROWS'
 		}
-		result = self.spreadsheets.values().update(
-			spreadsheetId=self.sheet_id, 
-			range=sheet_range, 
-			valueInputOption='USER_ENTERED', 
-			body=body
-		).execute()
+		self.perform_update_sheet_action(sheet_range, body)
 
 
 	def divide_list(self, numbers):
@@ -190,57 +174,67 @@ class Sheet:
 		if sublist:
 			result.append(sublist)
 		return result
+	
+	def divide_list_verticaly(self, item_value_tuples):
+		result = []
+		sublist = []
+		item_value_tuples = sorted(item_value_tuples, key=lambda item_value_tuple: item_value_tuple[0]["_row"])
+		for i in range(len(item_value_tuples)):
+			sublist.append(item_value_tuples[i])
+			if i + 1 < len(item_value_tuples) and item_value_tuples[i + 1][0]["_row"] != item_value_tuples[i][0]["_row"] + 1:
+				indexes = range(i - len(sublist) + 1, i + 1)
+				result_item = list(map(lambda index: (item_value_tuples[index][0], item_value_tuples[index][1]), indexes))
+				result.append(result_item)
+				sublist = []
+		if sublist:
+			indexes = range(len(item_value_tuples) - len(sublist), len(item_value_tuples))
+			result_item = list(map(lambda index: (item_value_tuples[index][0], item_value_tuples[index][1]), indexes))
+			result.append(result_item)
+		return result
 
-
-	def set_item_values(self, item, keyValues):
-		key_indexes = sorted(list(map(lambda key: self.fields.index(key) + 1, keyValues.keys())))
+	def set_item_values(self, item, key_values):
+		key_indexes = sorted(list(map(lambda key: self.fields.index(key) + 1, key_values.keys())))
 		groups = self.divide_list(key_indexes)
 		for group in groups:
 			column1 = self.number_to_letter(group[0])
 			column2 = self.number_to_letter(group[-1])
 			sheet_range = f'{self.sheet_page}!{column1}{item["_row"]}:{column2}{item["_row"]}'
-			values = list(map(lambda index: keyValues[self.fields[index - 1]], group))
+			values = list(map(lambda index: key_values[self.fields[index - 1]], group))
 			body = {
 				'range': sheet_range,
 				'values': [values],
 				'majorDimension': 'ROWS'
 			}
-			result = self.spreadsheets.values().update(
-				spreadsheetId=self.sheet_id, 
-				range=sheet_range,
-				valueInputOption='USER_ENTERED', 
-				body=body
-			).execute()
-		for key in keyValues.keys():
-			item[key] = keyValues[key]
+			self.perform_update_sheet_action(sheet_range, body)
+		for key in key_values.keys():
+			item[key] = key_values[key]
 
-	def set_items_values(self, items, keyValuesList):
-		key_indexes = sorted(list(map(lambda key: self.fields.index(key) + 1, keyValuesList[0].keys())))
+	def set_straight_items_values(self, item_value_tuples):
+		key_values = item_value_tuples[0][1]
+		key_indexes = sorted(list(map(lambda key: self.fields.index(key) + 1, key_values.keys())))
 		groups = self.divide_list(key_indexes)
 		for group in groups:
 			column1 = self.number_to_letter(group[0])
 			column2 = self.number_to_letter(group[-1])
-			sheet_range = f'{self.sheet_page}!{column1}{items[0]["_row"]}:{column2}{items[-1]["_row"]}'
-
-			valuesList = []
-			for keyValues in keyValuesList:
-				values = list(map(lambda index: keyValues[self.fields[index - 1]], group))
-				valuesList.append(values)
+			sheet_range = f'{self.sheet_page}!{column1}{item_value_tuples[0][0]["_row"]}:{column2}{item_value_tuples[-1][0]["_row"]}'
+			values = []
+			for item_value_tuple in item_value_tuples:
+				values.append(list(map(lambda index: item_value_tuple[1][self.fields[index - 1]], group)))
 			body = {
 				'range': sheet_range,
-				'values': valuesList,
+				'values': values,
 				'majorDimension': 'ROWS'
 			}
-			result = self.spreadsheets.values().update(
-				spreadsheetId=self.sheet_id, 
-				range=sheet_range,
-				valueInputOption='USER_ENTERED', 
-				body=body
-			).execute()
-		for i, keyValues in enumerate(keyValuesList):
-			for key in keyValues.keys():
-				items[i][key] = keyValues[key]
+			self.perform_update_sheet_action(sheet_range, body)
+		for item_value_tuple in item_value_tuples:
+			for key in item_value_tuple[1].keys():
+				item_value_tuple[0][key] = item_value_tuple[1][key]
 
+
+	def set_items_values(self, item_value_tuples):
+		groups = self.divide_list_verticaly(item_value_tuples)
+		for group in groups:
+			self.set_straight_items_values(group)
 
 	def set_item_value(self, item, value, key=None):
 		item[key] = value
@@ -251,12 +245,50 @@ class Sheet:
 			'values': [[value]],
 			'majorDimension': 'ROWS'
 		}
-		result = self.spreadsheets.values().update(
-			spreadsheetId=self.sheet_id, 
-			range=sheet_range, 
-			valueInputOption='USER_ENTERED', 
-			body=body
-		).execute()
+		self.perform_update_sheet_action(sheet_range, body)
+
+
+	def perform_get_sheet_action(self, range):
+		try:
+			return self.spreadsheets.values().get(spreadsheetId=self.sheet_id, range=range).execute()
+		except HttpError as e:
+			if e.resp.status == 429:
+				# Quota exceeded, handle this error
+				print("Spreadsheets quota exceeded. Waiting for 60 seconds before retrying...")
+				time.sleep(60)
+				# Retry the operation after waiting
+				return self.perform_get_sheet_action(range)
+			else:
+				# Handle other HTTP errors here
+				print(f"An HTTP error occurred: {e}")
+				return None
+		except Exception as e:
+			# Handle other exceptions here
+			print(f"An error occurred: {e}")
+			return None
+
+
+	def perform_update_sheet_action(self, range, body):
+		try:
+			result = self.spreadsheets.values().update(
+				spreadsheetId=self.sheet_id, 
+				range=range, 
+				valueInputOption='USER_ENTERED', 
+				body=body
+			).execute()
+		except HttpError as e:
+			if e.resp.status == 429:
+				# Quota exceeded, handle this error
+				print("Spreadsheets quota exceeded. Waiting for 60 seconds before retrying...")
+				time.sleep(60)
+				# Retry the operation after waiting
+				self.perform_update_sheet_action(range, body)
+			else:
+				# Handle other HTTP errors here
+				print(f"An HTTP error occurred: {e}")
+		except Exception as e:
+			# Handle other exceptions here
+			print(f"An error occurred: {e}")
 
 
 	def refresh(self):
