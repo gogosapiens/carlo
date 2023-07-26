@@ -17,6 +17,9 @@ def get_folder_name(folder_id):
 		print(f"An error occurred: {error}")
 	return folder['name']
 
+def get_folder_url(folder_id):
+	return f"https://drive.google.com/drive/folders/{folder_id}"
+
 def create_folder(folder_name, parent_folder_id=None, users=keychain.keys()["google_drive_users"]):
 	# Create the folder
 	folder_metadata = {

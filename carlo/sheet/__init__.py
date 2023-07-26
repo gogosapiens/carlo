@@ -6,6 +6,9 @@ import time
 
 class Sheet:
 
+	def url(self):
+		return f"https://docs.google.com/spreadsheets/d/{self.sheet_id}"
+
 	def insert_item(self, new_item, row=None):
 		if row == None:
 			row = 2 if len(self.items) == 0 else self.items[-1]["_row"] + 1
