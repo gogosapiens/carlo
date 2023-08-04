@@ -20,7 +20,7 @@ def get_folder_name(folder_id):
 def get_folder_url(folder_id):
 	return f"https://drive.google.com/drive/folders/{folder_id}"
 
-def create_folder(folder_name, parent_folder_id=None, users=keychain.keys()["google_drive_users"]):
+def create_folder(folder_name, parent_folder_id=None, users=[]):
 	# Create the folder
 	folder_metadata = {
 		'name': folder_name,
