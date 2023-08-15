@@ -2,11 +2,11 @@ import requests
 from carlo import keychain
 
 class Asana:
-    workspace_gid = keychain.keys()["asana_workspace_id"]
-    api_token = keychain.keys()["asana_access_token"]
-
+    workspace_gid = ""
+    api_token = ""
     def __init__(self):
-        pass
+        self.workspace_gid = keychain.keys()["asana_workspace_id"]
+        self.api_token = keychain.keys()["asana_access_token"]
 
     def check_token_permissions(self):
         headers = {
@@ -69,10 +69,11 @@ class Asana:
         
         
 class AsanaProject:
-    api_token = keychain.keys()["asana_access_token"]
+    api_token = ""
     project_gid = ""
 
     def __init__(self, project_gid):
+        self.api_token = keychain.keys()["asana_access_token"]
         self.project_gid = project_gid
 
     def url(self):
