@@ -69,6 +69,11 @@ class Sheet:
 
 		return spreadsheet_id, spreadsheet_url
 		
+	def clear(self):
+		body = {
+        	"ranges": [f'{self.sheet_page}!{Sheet.max_range.replace("A1", "A2")}'],
+    	}
+		self.perform_clear_sheet_action(body)
 
 	def create_sheet(sheet_name, folder_id="", users=[]):
 		# Replace the placeholders with your values
@@ -136,9 +141,10 @@ class Sheet:
 		service = build('sheets', 'v4', credentials=creds)
 		return service.spreadsheets()
 
+	max_range = "A1:CZ100000"
 
 	def get_items(self):
-		result = self.perform_get_sheet_action(f'{self.sheet_page}!A1:CZ100000')
+		result = self.perform_get_sheet_action(f'{self.sheet_page}!{Sheet.max_range}')
 		values = result.get('values', [])
 		items = []
 		fields = list(filter(lambda f: len(f) > 0, values[0]))
@@ -286,6 +292,24 @@ class Sheet:
 				time.sleep(60)
 				# Retry the operation after waiting
 				self.perform_update_sheet_action(range, body)
+			else:
+				# Handle other HTTP errors here
+				print(f"An HTTP error occurred: {e}")
+		except Exception as e:
+			# Handle other exceptions here
+			print(f"An error occurred: {e}")
+
+	def perform_clear_sheet_action(self, body):
+		try:
+			print(body)
+			result = self.spreadsheets().values().clear(spreadsheetId=self.sheet_id, body=body).execute()
+		except HttpError as e:
+			if e.resp.status == 429:
+				# Quota exceeded, handle this error
+				print("Spreadsheets quota exceeded. Waiting for 60 seconds before retrying...")
+				time.sleep(60)
+				# Retry the operation after waiting
+				self.perform_clear_sheet_action(body)
 			else:
 				# Handle other HTTP errors here
 				print(f"An HTTP error occurred: {e}")
