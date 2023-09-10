@@ -1,5 +1,6 @@
 import json
 import openai
+import requests
 from carlo import keychain
 from carlo import printc
 import time
@@ -26,6 +27,13 @@ def get_text(prompt, model=default_model, temperature=1, validator=None, optimiz
 		printc(f"Error from GPT: {e}")
 		printc(f"Retrying in 30 seconds...")
 		time.sleep(30)
+		return get_text(prompt, model=model, temperature=temperature, validator=validator, optimizer=optimizer, ranks=ranks.copy(), repeat_count=repeat_count-1)
+	except requests.exceptions.Timeout:
+		printc("Request timed out. Retrying in 30 seconds...")
+		time.sleep(30)
+		return get_text(prompt, model=model, temperature=temperature, validator=validator, optimizer=optimizer, ranks=ranks.copy(), repeat_count=repeat_count-1)
+	except Exception as e:
+		printc(f"Unexpected error occurred: {e}")
 		return get_text(prompt, model=model, temperature=temperature, validator=validator, optimizer=optimizer, ranks=ranks.copy(), repeat_count=repeat_count-1)
 	
 	answer = response.choices[0].message.content
