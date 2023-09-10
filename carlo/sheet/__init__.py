@@ -138,7 +138,7 @@ class Sheet:
 			num //= 26
 		return letters
 
-	def get_spreadsheets():
+	def get_spreadsheets(self):
 		scopes = ['https://www.googleapis.com/auth/spreadsheets']
 		creds = service_account.Credentials.from_service_account_file(keychain.keys()["google_credentials_path"], scopes=scopes)
 		service = build('sheets', 'v4', credentials=creds)
