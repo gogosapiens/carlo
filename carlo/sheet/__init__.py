@@ -122,6 +122,9 @@ class Sheet:
 		return items[0] if len(items) > 0 else None
 
 	def __init__(self, sheet_id, page=""):
+		self.spreadsheets = self.get_spreadsheets()
+		self.items = []
+		self.fields = []
 		self.sheet_id = sheet_id
 		self.sheet_page = page
 		self.refresh()
@@ -302,7 +305,7 @@ class Sheet:
 	def perform_clear_sheet_action(self, body):
 		try:
 			print(body)
-			result = self.spreadsheets().values().clear(spreadsheetId=self.sheet_id, body=body).execute()
+			result = self.spreadsheets().values().batchClear(spreadsheetId=self.sheet_id, body=body).execute()
 		except HttpError as e:
 			if e.resp.status == 429:
 				# Quota exceeded, handle this error
@@ -320,11 +323,3 @@ class Sheet:
 
 	def refresh(self):
 		self.items, self.fields = self.get_items()
-
-
-	sheet_id = ""
-	sheet_page = ""
-	spreadsheets = get_spreadsheets()
-	items = []
-	fields = []
-
