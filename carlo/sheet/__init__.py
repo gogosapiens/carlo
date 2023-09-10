@@ -71,7 +71,7 @@ class Sheet:
 		
 	def clear(self):
 		body = {
-        	"ranges": [f'{self.sheet_page}!{Sheet.max_range.replace("A1", "A2")}'],
+        	"ranges": [f'{self.sheet_page}!A2:C4'],
     	}
 		self.perform_clear_sheet_action(body)
 
