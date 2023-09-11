@@ -8,7 +8,7 @@ import time
 openai.api_key = keychain.keys()["openai_key"]
 default_model = "gpt-3.5-turbo"
 
-def get_text(prompt, model=default_model, temperature=1, validator=None, optimizer=None, ranks=None, repeat_count=5):
+def get_text(prompt, model=default_model, temperature=1, validator=None, optimizer=None, ranks=None, repeat_count=10):
 	if ranks is None:
 		ranks = []
 
@@ -80,7 +80,7 @@ def get_json_optimizer_logic(response, prompt, model, temperature, validator, op
 	else:
 		return response
 
-def get_value(prompt, model=default_model, temperature=1, validator=None, optimizer=None, repeat_count=5):
+def get_value(prompt, model=default_model, temperature=1, validator=None, optimizer=None, repeat_count=10):
 	key = "value"
 	prompt += f"Put result under the key '{key}' in json."
 	validator_func = None
@@ -106,7 +106,7 @@ def best_results(ranks):
 	else:
 		return None
 
-def get_json(prompt, model=default_model, temperature=1, validator=None, optimizer=None, ranks=None, repeat_count=5):
+def get_json(prompt, model=default_model, temperature=1, validator=None, optimizer=None, ranks=None, repeat_count=10):
 	if ranks is None:
 		ranks = []
 	prompt += "\nDon't add any extra text. Return only JSON."
@@ -134,6 +134,6 @@ def get_json(prompt, model=default_model, temperature=1, validator=None, optimiz
 			printc(f"Error decoding GPT JSON: {e}")
 			return get_json_optimizer_logic(json_data, prompt, model, temperature, validator, optimizer, ranks.copy(), repeat_count)
 		
-def translate(text, target_language, model=default_model, note="", validator=None, optimizer=None, repeat_count=5):
+def translate(text, target_language, model=default_model, note="", validator=None, optimizer=None, repeat_count=10):
 	prompt = f"Translate text into language {target_language}. {note}\nText: {text}\n"
 	return get_value(prompt, model=model, validator=validator, optimizer=optimizer, repeat_count=repeat_count)
