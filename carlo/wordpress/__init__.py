@@ -4,10 +4,7 @@ from wordpress_xmlrpc.compat import xmlrpc_client
 from wordpress_xmlrpc.methods.media import UploadFile
 
 class WordPress:
-	domain = ""
-	user = ""
-	app_password = ""
-
+	
 	def __init__(self, domain, user, app_password):
 		self.domain = domain
 		self.user = user
@@ -65,9 +62,7 @@ class WordPress:
 		return WordPressImage(response["id"], response["url"])
 	
 class WordPressImage:
-	id = ""
-	url = ""
-
+	
 	def __init__(self, id, url):
 		self.id = id
 		self.url = url

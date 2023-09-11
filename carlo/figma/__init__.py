@@ -2,8 +2,7 @@ import requests
 from carlo import keychain
 
 class Figma:
-    file_key = ""
-
+    
     def __init__(self, file_key):
         self.file_key = file_key
 

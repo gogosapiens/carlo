@@ -70,10 +70,17 @@ class Sheet:
 		return spreadsheet_id, spreadsheet_url
 		
 	def clear(self):
+		column = self.number_to_letter(len(self.fields))
+		sheet_range = f'{self.sheet_page}!A2:{column}{len(self.items) + 1}'
+		empty_row = [''] * len(self.fields)
+		empty_table = [empty_row] * len(self.items)
 		body = {
-        	"ranges": [f'{self.sheet_page}!A2:C4'],
-    	}
-		self.perform_clear_sheet_action(body)
+			'range': sheet_range,
+			'values': empty_table,
+			'majorDimension': 'ROWS'
+		}
+		self.perform_update_sheet_action(sheet_range, body)
+		
 
 	def create_sheet(sheet_name, folder_id="", users=[]):
 		# Replace the placeholders with your values
@@ -301,25 +308,6 @@ class Sheet:
 		except Exception as e:
 			# Handle other exceptions here
 			print(f"An error occurred: {e}")
-
-	def perform_clear_sheet_action(self, body):
-		try:
-			print(body)
-			result = self.spreadsheets().values().batchClear(spreadsheetId=self.sheet_id, body=body).execute()
-		except HttpError as e:
-			if e.resp.status == 429:
-				# Quota exceeded, handle this error
-				print("Spreadsheets quota exceeded. Waiting for 60 seconds before retrying...")
-				time.sleep(60)
-				# Retry the operation after waiting
-				self.perform_clear_sheet_action(body)
-			else:
-				# Handle other HTTP errors here
-				print(f"An HTTP error occurred: {e}")
-		except Exception as e:
-			# Handle other exceptions here
-			print(f"An error occurred: {e}")
-
 
 	def refresh(self):
 		self.items, self.fields = self.get_items()

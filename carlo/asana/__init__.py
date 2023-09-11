@@ -2,8 +2,7 @@ import requests
 from carlo import keychain
 
 class Asana:
-    workspace_gid = ""
-    api_token = ""
+
     def __init__(self):
         self.workspace_gid = keychain.keys()["asana_workspace_id"]
         self.api_token = keychain.keys()["asana_access_token"]
@@ -69,9 +68,7 @@ class Asana:
         
         
 class AsanaProject:
-    api_token = ""
-    project_gid = ""
-
+    
     def __init__(self, project_gid):
         self.api_token = keychain.keys()["asana_access_token"]
         self.project_gid = project_gid
@@ -205,10 +202,6 @@ class AsanaProject:
             return None
         
 class AsanaTask:
-    project = None
-    section_gid = ""
-    task_gid = ""
-
     def __init__(self, project, section_gid, task_gid):
         self.project = project
         self.section_gid = section_gid
