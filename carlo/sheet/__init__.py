@@ -80,6 +80,7 @@ class Sheet:
 			'majorDimension': 'ROWS'
 		}
 		self.perform_update_sheet_action(sheet_range, body)
+		self.refresh()
 		
 
 	def create_sheet(sheet_name, folder_id="", users=[]):
