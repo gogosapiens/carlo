@@ -56,8 +56,6 @@ def shorten_words(word_list):
 
 def printc(text, phase=None, args=None):
 
-    shortened_args = shorten_words(args.keys())
-
     frame_info = inspect.stack()[1]
     file_name = frame_info.filename.split('/')[-1]
     string = f"[{file_name}]: "
@@ -65,6 +63,7 @@ def printc(text, phase=None, args=None):
         string += f"[{phase.upper()}] "
 
     if isinstance(args, dict):
+        shortened_args = shorten_words(args.keys())
         for key, value in args.items():
             string += f"[{shortened_args[key]}: {value}] "
             
