@@ -37,7 +37,27 @@ def call(script_path, input_json):
 def printme(text):
     print(text)
 
+def shorten_words(word_list):
+    shortened = {}
+    for word in word_list:
+        if word == "app_id":
+            shortened[word] = "app_id"
+            continue
+        short_word = ""
+        for i, char in enumerate(word):
+            if i == 0:
+                short_word += char
+            elif word[:i] not in word_list:
+                short_word += char
+            else:
+                continue
+        shortened[word] = short_word
+    return shortened
+
 def printc(text, phase=None, args=None):
+
+    shortened_args = shorten_words(args.keys())
+
     frame_info = inspect.stack()[1]
     file_name = frame_info.filename.split('/')[-1]
     string = f"[{file_name}]: "
@@ -46,7 +66,7 @@ def printc(text, phase=None, args=None):
 
     if isinstance(args, dict):
         for key, value in args.items():
-            string += f"[{key}: {value}] "
+            string += f"[{shortened_args[key]}: {value}] "
             
     elif isinstance(args, list):
         for arg in args:
