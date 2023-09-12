@@ -39,7 +39,8 @@ def printme(text):
 
 def shorten_words(word_list):
     shortened = {}
-    for word in word_list:
+    words = list(word_list)
+    for word in words:
         if word == "app_id":
             shortened[word] = "app_id"
             continue
@@ -47,15 +48,20 @@ def shorten_words(word_list):
         for i, char in enumerate(word):
             if i == 0:
                 short_word += char
-            elif word[:i] not in word_list:
-                short_word += char
             else:
-                continue
+                is_similar_to_others = False
+                for other_word in words:
+                    if other_word != word and other_word.startswith(word[:i]):
+                        is_similar_to_others = True
+                        break
+                if is_similar_to_others:
+                    short_word += char
+                else:
+                    break
         shortened[word] = short_word
     return shortened
 
 def printc(text, phase=None, args=None):
-
     frame_info = inspect.stack()[1]
     file_name = frame_info.filename.split('/')[-1]
     string = f"[{file_name}]: "
