@@ -61,6 +61,19 @@ def shorten_words(word_list):
         shortened[word] = short_word
     return shortened
 
+def shorten_value(value):
+    input_string = str(value)
+    max_length = 16
+    if len(input_string) > max_length:
+
+        # Вычисляем количество символов, которые нужно оставить с обоих сторон строки
+        left_chars = (max_length - 3) // 2
+        right_chars = max_length - 3 - left_chars
+        shortened_string = input_string[:left_chars] + "..." + input_string[-right_chars:]
+        return shortened_string
+    else:
+        return input_string
+
 def printc(text, phase=None, args=None):
     frame_info = inspect.stack()[1]
     file_name = frame_info.filename.split('/')[-1]
@@ -71,11 +84,11 @@ def printc(text, phase=None, args=None):
     if isinstance(args, dict):
         shortened_args = shorten_words(args.keys())
         for key, value in args.items():
-            string += f"[{shortened_args[key]}: {value}] "
+            string += f"[{shortened_args[key]}: {shorten_value(value)}] "
             
     elif isinstance(args, list):
         for arg in args:
-            string += f"[{arg}] "
+            string += f"[{shorten_value(arg)}] "
 
     string += text
     print(string)
