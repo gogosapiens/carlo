@@ -145,8 +145,8 @@ def printc(text, phase=None, args=None):
         for arg in args:
             string += f"[{shorten_arg_value(arg)}] "
 
-    string += text
     if phase != None:
         string += f"<{phase.upper()}> "
+    string += text
     print(string)
     
