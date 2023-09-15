@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='carlo',
-    version='0.1.54',
+    version='0.1.55',
     description='Description of your package',
     packages=find_packages(),
     install_requires=[

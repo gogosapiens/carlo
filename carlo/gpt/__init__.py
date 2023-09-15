@@ -28,6 +28,15 @@ def get_text(prompt, model=default_model, temperature=1, validator=None, optimiz
 		printc(f"GPT rate limit exceeded. Retrying in {retry_time} seconds...")
 		time.sleep(retry_time)
 		return get_text(prompt, model=model, temperature=temperature, validator=validator, optimizer=optimizer, ranks=ranks.copy(), repeat_count=repeat_count-1)
+	except openai.error.InvalidRequestError as e:
+		printc(f"Invalid GPT request: {e}")
+		if e.code == "context_length_exceeded":
+			printc(f"Retrying with model 'gpt-4'...")
+			return get_text(prompt, model="gpt-4", temperature=temperature, validator=validator, optimizer=optimizer, ranks=ranks.copy(), repeat_count=repeat_count-1)
+		else:
+			printc(f"Retrying in 30 seconds...")
+			time.sleep(30)
+			return get_text(prompt, model=model, temperature=temperature, validator=validator, optimizer=optimizer, ranks=ranks.copy(), repeat_count=repeat_count-1)
 	except openai.error.OpenAIError as e:
 		printc(f"Error from GPT: {e}")
 		printc(f"Retrying in 30 seconds...")

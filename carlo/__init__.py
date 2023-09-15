@@ -37,7 +37,7 @@ def call(script_path, input_json):
 def printme(text):
     print(text)
 
-def shorten_words(word_list):
+def shorten_arg_names(word_list):
     shortened = {}
     words = list(word_list)
     for word in words:
@@ -61,7 +61,7 @@ def shorten_words(word_list):
         shortened[word] = short_word
     return shortened
 
-def shorten_value(value):
+def shorten_arg_value(value):
     input_string = str(value)
     max_length = 16
     if len(input_string) > max_length:
@@ -74,22 +74,79 @@ def shorten_value(value):
     else:
         return input_string
 
+def shorten_phase(phase):
+    phase_length = 10
+    if len(phase) > phase_length:
+        return phase[:(phase_length - 3)] + "..."
+    else:
+        return phase + " " * (phase_length - len(phase))
+
+# class Log:
+#     phases = {}
+#     constant_args = None
+#     phase_counter = 0
+
+#     @classmethod
+#     def phase1(cls, phase):
+#         cls.phases["1"] = [phase]
+
+#     @classmethod
+#     def phase2(cls, phase):
+#         cls.phases.append(phase)
+
+#     @classmethod
+#     def phase3(cls, phase):
+#         cls.phases.append(phase)
+#         cls.phase_counter += 1
+
+#     @classmethod
+#     def clear_phases(cls):
+#         cls.phases = []
+
+#     @classmethod
+#     def set_args(cls, args):
+#         cls.constant_args = args
+    
+#     @classmethod
+#     def print(cls, text, args=None):
+#         frame_info = inspect.stack()[1]
+#         file_name = "/".join(frame_info.filename.split('/')[-2:])
+#         string = f"{file_name}: "
+
+#         current_args = None
+#         if args != None:
+#             current_args = args
+#         elif cls.constant_args != None:
+#             current_args = cls.constant_args
+#         else:
+#             current_args = {}
+        
+#         shortened_args = shorten_arg_names(current_args.keys())
+
+#         for key, value in current_args.items():
+#             string += f"[{shortened_args[key]}: {shorten_arg_value(value)}] "
+
+#         for phase in cls.phases:
+#             string += f"> {phase.upper()} "
+
+#         print(f"{string}> {text}")
+
 def printc(text, phase=None, args=None):
     frame_info = inspect.stack()[1]
     file_name = frame_info.filename.split('/')[-1]
     string = f"[{file_name}]: "
-    if phase != None:
-        string += f"[{phase.upper()}] "
 
     if isinstance(args, dict):
-        shortened_args = shorten_words(args.keys())
+        shortened_args = shorten_arg_names(args.keys())
         for key, value in args.items():
-            string += f"[{shortened_args[key]}: {shorten_value(value)}] "
+            string += f"[{shortened_args[key]}: {shorten_arg_value(value)}] "
             
     elif isinstance(args, list):
         for arg in args:
-            string += f"[{shorten_value(arg)}] "
+            string += f"[{shorten_arg_value(arg)}] "
 
     string += text
+    if phase != None:
+        string += f"<{phase.upper()}> "
     print(string)
     
