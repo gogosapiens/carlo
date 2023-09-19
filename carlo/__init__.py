@@ -134,7 +134,7 @@ def shorten_phase(phase):
 def printc(text, phase=None, args=None):
     frame_info = inspect.stack()[1]
     file_name = frame_info.filename.split('/')[-1]
-    string = f"[{file_name}]: "
+    string = f"{file_name}: "
 
     if isinstance(args, dict):
         shortened_args = shorten_arg_names(args.keys())
@@ -146,7 +146,7 @@ def printc(text, phase=None, args=None):
             string += f"[{shorten_arg_value(arg)}] "
 
     if phase != None:
-        string += f"<{phase.upper()}> "
+        string += f">{phase.upper()}> "
     string += text
     print(string)
     
