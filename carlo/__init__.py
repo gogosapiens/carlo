@@ -133,7 +133,7 @@ def shorten_phase(phase):
 
 def printc(text, phase=None, args=None):
     frame_info = inspect.stack()[1]
-    file_name = frame_info.filename.split('/')[-1]
+    file_name = "/".join(frame_info.filename.split('/')[-2:])
     string = f"{file_name}: "
 
     if isinstance(args, dict):
