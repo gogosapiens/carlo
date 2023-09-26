@@ -8,6 +8,13 @@ import time
 openai.api_key = keychain.keys()["openai_key"]
 default_model = "gpt-3.5-turbo"
 
+def validate_response(response, validator):
+	result = validator(response)
+	if isinstance(result, bool):
+		return result, response
+	else:
+		return True, result
+
 def get_text(prompt, model=default_model, temperature=1, validator=None, optimizer=None, ranks=None, repeat_count=10):
 	if ranks is None:
 		ranks = []
@@ -53,8 +60,9 @@ def get_text(prompt, model=default_model, temperature=1, validator=None, optimiz
 	answer = response.choices[0].message.content
 
 	if validator != None:
-		if validator(answer):
-			return get_text_optimizer_logic(answer, prompt, model, temperature, validator, optimizer, ranks.copy(), repeat_count)
+		ok, new_answer = validate_response(answer, validator)
+		if ok:
+			return get_text_optimizer_logic(new_answer, prompt, model, temperature, validator, optimizer, ranks.copy(), repeat_count)
 		else:
 			if repeat_count > 0:
 				printc(f"Response didn't pass validation. Repeating GPT request...")
@@ -104,7 +112,7 @@ def get_value(prompt, model=default_model, temperature=1, validator=None, optimi
 
 	result = get_json(prompt, model=model, temperature=temperature, validator=validator_func, optimizer=optimizer_func, ranks=[], repeat_count=repeat_count)
 	if result != None:
-		return result[key]
+		return result[key] if (isinstance(result, dict) and key in result) else result
 	else:
 		return None
 
@@ -123,8 +131,9 @@ def get_json(prompt, model=default_model, temperature=1, validator=None, optimiz
 	try:
 		json_data = json.loads(json_str)
 		if validator != None:
-			if validator(json_data):
-				return get_json_optimizer_logic(json_data, prompt, model, temperature, validator, optimizer, ranks.copy(), repeat_count)
+			ok, new_json_data = validate_response(json_data, validator)
+			if ok:
+				return get_json_optimizer_logic(new_json_data, prompt, model, temperature, validator, optimizer, ranks.copy(), repeat_count)
 			else:
 				if repeat_count > 0:
 					printc(f"Response didn't pass validation. Repeating GPT request...")
