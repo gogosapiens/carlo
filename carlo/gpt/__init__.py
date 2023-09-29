@@ -150,7 +150,7 @@ def get_json(prompt, model=default_model, temperature=1, validator=None, optimiz
 			return get_json(prompt, model=model, temperature=temperature, validator=validator, optimizer=optimizer, ranks=ranks.copy(), repeat_count=repeat_count-1)
 		else:
 			printc(f"Error decoding GPT JSON: {e}")
-			return get_json_optimizer_logic(json_data, prompt, model, temperature, validator, optimizer, ranks.copy(), repeat_count)
+			return best_results(ranks)
 		
 def translate(text, target_language, model=default_model, note="", validator=None, optimizer=None, repeat_count=10):
 	prompt = f"Translate text into language {target_language}. {note}\nText: {text}\n"
