@@ -281,7 +281,9 @@ class Sheet:
 			else:
 				# Handle other HTTP errors here
 				print(f"An HTTP error occurred: {e}")
-				return None
+				print("Sleeping for 10 seconds before retrying...")
+				time.sleep(10)
+				return self.perform_get_sheet_action(range)
 		except Exception as e:
 			# Handle other exceptions here
 			print(f"An error occurred: {e}")
@@ -306,6 +308,9 @@ class Sheet:
 			else:
 				# Handle other HTTP errors here
 				print(f"An HTTP error occurred: {e}")
+				print("Sleeping for 10 seconds before retrying...")
+				time.sleep(10)
+				self.perform_update_sheet_action(range, body)
 		except Exception as e:
 			# Handle other exceptions here
 			print(f"An error occurred: {e}")
