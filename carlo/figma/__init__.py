@@ -1,5 +1,5 @@
 import requests
-from carlo import keychain
+from carlo import keychain, printc
 
 class Figma:
     
@@ -19,9 +19,11 @@ class Figma:
         headers = {'X-Figma-Token': access_token}
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
-            print(response.json())
+            printc(response.json())
             image_url = response.json()["images"][node_id]
+            printc(image_url)
             response = requests.get(image_url)
+            printc(response)
             with open(output_image, 'wb') as f:
                 f.write(response.content)
             return True
