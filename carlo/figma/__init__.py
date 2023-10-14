@@ -19,11 +19,11 @@ class Figma:
         headers = {'X-Figma-Token': access_token}
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
-            printc(response.json())
+            print(response.json())
             image_url = response.json()["images"][node_id]
-            printc(image_url)
+            print(image_url)
             response = requests.get(image_url)
-            printc(response)
+            print(response)
             with open(output_image, 'wb') as f:
                 f.write(response.content)
             return True
