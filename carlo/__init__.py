@@ -63,7 +63,7 @@ def shorten_arg_names(word_list):
 
 def shorten_arg_value(value):
     input_string = str(value)
-    max_length = 20
+    max_length = 24
     if len(input_string) > max_length:
 
         # Вычисляем количество символов, которые нужно оставить с обоих сторон строки
