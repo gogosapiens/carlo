@@ -6,7 +6,7 @@ from carlo import printc
 import time
 
 openai.api_key = keychain.keys()["openai_key"]
-default_model = "gpt-3.5-turbo"
+default_model = "gpt-4"
 
 def validate_response(response, validator):
 	result = validator(response)
@@ -128,6 +128,12 @@ def get_json(prompt, model=default_model, temperature=1, validator=None, optimiz
 		ranks = []
 	prompt += "\nDon't add any extra text. Return only JSON."
 	json_str = get_text(prompt, model=model, temperature=temperature, repeat_count=repeat_count)
+	if json_str is None:
+		if repeat_count > 0:
+			printc("Repeating GPT request...")
+			return get_json(prompt, model=model, temperature=temperature, validator=validator, optimizer=optimizer, ranks=ranks.copy(), repeat_count=repeat_count-1)
+		else:
+			return best_results(ranks)
 	try:
 		json_data = json.loads(json_str)
 		if validator != None:
