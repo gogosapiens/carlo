@@ -6,7 +6,7 @@ from carlo import printc
 import time
 
 openai.api_key = keychain.keys()["openai_key"]
-default_model = "gpt-4"
+default_model = "gpt-3.5-turbo"
 
 def validate_response(response, validator):
 	result = validator(response)
