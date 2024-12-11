@@ -8,7 +8,7 @@ import time
 
 client = OpenAI(api_key=keychain.keys()["openai_key"])
 
-default_model = "gpt-3.5-turbo-1106"
+default_model = "gpt-4o"
 
 def validate_response(response, validator):
 	result = validator(response)
