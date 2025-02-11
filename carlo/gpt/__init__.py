@@ -1,12 +1,10 @@
 import json
-from openai import OpenAI
 import openai
 import requests
-from carlo import keychain
-from carlo import printc
 import time
+import keychain
 
-client = OpenAI(api_key=keychain.keys()["openai_key"])
+client = openai.OpenAI(api_key=keychain.keys()["openai_key"])
 
 default_model = "gpt-4o"
 
@@ -22,7 +20,7 @@ def get_text(prompt, model=default_model, temperature=1, validator=None, optimiz
 		ranks = []
 
 	if repeat_count < 0:
-		printc("Repeat count exceeded. Returning best result.")
+		print("Repeat count exceeded. Returning best result.")
 		return best_results(ranks)
 
 	messages = [{"role": "user", "content": prompt}]
@@ -72,13 +70,13 @@ def get_text(prompt, model=default_model, temperature=1, validator=None, optimiz
 				)	
 	except openai.RateLimitError as e:
 		retry_time = e.retry_after if hasattr(e, 'retry_after') else 30
-		printc(f"GPT rate limit exceeded. Retrying in {retry_time} seconds...")
+		print(f"GPT rate limit exceeded. Retrying in {retry_time} seconds...")
 		time.sleep(retry_time)
 		return get_text_func()
 	except openai.BadRequestError as e:
-		printc(f"Bad GPT request: {e}")
+		print(f"Bad GPT request: {e}")
 		if e.code == "context_length_exceeded":
-			printc(f"Retrying with model 'gpt-4'...")
+			print(f"Retrying with model 'gpt-4'...")
 			return get_text(
 				prompt, 
 				model="gpt-4-1106-preview", 
@@ -92,27 +90,27 @@ def get_text(prompt, model=default_model, temperature=1, validator=None, optimiz
 				debug=debug
 			)
 		else:
-			printc(f"Retrying in 30 seconds...")
+			print(f"Retrying in 30 seconds...")
 			time.sleep(30)
 			return get_text_func()
 	except openai.OpenAIError as e:
-		printc(f"Error from GPT: {e}")
-		printc(f"Retrying in 30 seconds...")
+		print(f"Error from GPT: {e}")
+		print(f"Retrying in 30 seconds...")
 		time.sleep(30)
 		return get_text_func()
 	except requests.exceptions.Timeout:
-		printc("GPT request timed out. Retrying in 30 seconds...")
+		print("GPT request timed out. Retrying in 30 seconds...")
 		time.sleep(30)
 		return get_text_func()
 	except Exception as e:
-		printc(f"Unexpected GPT error occurred: {e}")
+		print(f"Unexpected GPT error occurred: {e}")
 		return get_text_func()
 	
 	answer = response.choices[0].message.content
 	if debug:
-		printc(f"GPT model: {response.model}")
-		printc(f"GPT system_fingerprint=: {response.system_fingerprint=}")
-		printc(f"GPT usage: {response.usage}")
+		print(f"GPT model: {response.model}")
+		print(f"GPT system_fingerprint=: {response.system_fingerprint=}")
+		print(f"GPT usage: {response.usage}")
 
 	if validator != None:
 		ok, new_answer = validate_response(answer, validator)
@@ -120,7 +118,7 @@ def get_text(prompt, model=default_model, temperature=1, validator=None, optimiz
 			return get_text_optimizer_logic(answer, prompt, model, temperature, validator, optimizer, ranks.copy(), repeat_count, json_mode, seed, debug)
 		else:
 			if repeat_count > 0:
-				printc(f"Response didn't pass validation. Repeating GPT request...")
+				print(f"Response didn't pass validation. Repeating GPT request...")
 				return get_text_func()
 			else:
 				return best_results(ranks)
@@ -133,7 +131,7 @@ def get_text_optimizer_logic(response, prompt, model, temperature, validator, op
 		rank = optimizer(response)
 		ranks.append((response, rank))
 		if repeat_count > 0:
-			printc(f"Optimizing score: {rank}. Repeating GPT request...")
+			print(f"Optimizing score: {rank}. Repeating GPT request...")
 			return get_text(prompt, model=model, temperature=temperature, validator=validator, optimizer=optimizer, ranks=ranks.copy(), repeat_count=repeat_count-1, json_mode=json_mode, seed=seed, debug=debug)
 		else:
 			return best_results(ranks)
@@ -145,7 +143,7 @@ def get_json_optimizer_logic(response, prompt, model, temperature, validator, op
 		rank = optimizer(response)
 		ranks.append((response, rank))
 		if repeat_count > 0:
-			printc(f"Optimizing score: {rank}. Repeating GPT request...")
+			print(f"Optimizing score: {rank}. Repeating GPT request...")
 			return get_json(prompt, model=model, temperature=temperature, validator=validator, optimizer=optimizer, ranks=ranks.copy(), repeat_count=repeat_count-1, seed=seed, debug=debug)
 		else:
 			return best_results(ranks)
@@ -185,7 +183,7 @@ def get_json(prompt, model=default_model, temperature=1, validator=None, optimiz
 	json_str = get_text(prompt, model=model, temperature=temperature, repeat_count=repeat_count, json_mode=True, seed=seed, debug=debug)
 	if json_str is None:
 		if repeat_count > 0:
-			printc("Repeating GPT request...")
+			print("Repeating GPT request...")
 			return get_json(prompt, model=model, temperature=temperature, validator=validator, optimizer=optimizer, ranks=ranks.copy(), repeat_count=repeat_count-1, seed=seed, debug=debug)
 		else:
 			return best_results(ranks)
@@ -197,7 +195,7 @@ def get_json(prompt, model=default_model, temperature=1, validator=None, optimiz
 				return get_json_optimizer_logic(new_json_data, prompt, model, temperature, validator, optimizer, ranks.copy(), repeat_count, seed, debug)
 			else:
 				if repeat_count > 0:
-					printc(f"Response didn't pass validation. Repeating GPT request...")
+					print(f"Response didn't pass validation. Repeating GPT request...")
 					return get_json(prompt, model=model, temperature=temperature, validator=validator, optimizer=optimizer, ranks=ranks.copy(), repeat_count=repeat_count-1, seed=seed, debug=debug)
 				else:
 					return best_results(ranks)
@@ -206,11 +204,11 @@ def get_json(prompt, model=default_model, temperature=1, validator=None, optimiz
 
 	except json.JSONDecodeError as e:
 		if repeat_count > 0:
-			printc(f"Error decoding GPT JSON: {e}")
-			printc("Repeating GPT request...")
+			print(f"Error decoding GPT JSON: {e}")
+			print("Repeating GPT request...")
 			return get_json(prompt, model=model, temperature=temperature, validator=validator, optimizer=optimizer, ranks=ranks.copy(), repeat_count=repeat_count-1, seed=seed, debug=debug)
 		else:
-			printc(f"Error decoding GPT JSON: {e}")
+			print(f"Error decoding GPT JSON: {e}")
 			return best_results(ranks)
 		
 def translate(text, target_language, model=default_model, note="", validator=None, optimizer=None, repeat_count=10):
